@@ -7,7 +7,7 @@ import time
 import re
 import tempfile
 from fuzzywuzzy import process
-from streamlit_audio_recorder import audio_recorder  # pip install streamlit-audio-recorder
+from streamlit_mic_recorder import mic_recorder
 
 warnings.filterwarnings("ignore")
 
@@ -87,7 +87,7 @@ st.title("Voice Order Processing App")
 
 # Section: Record Audio
 st.header("Record Your Order")
-audio_bytes = audio_recorder()
+audio_bytes = mic_recorder()
 if audio_bytes is not None:
     st.audio(audio_bytes, format="audio/wav")
     st.session_state.recorded_audio = audio_bytes

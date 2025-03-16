@@ -1,8 +1,7 @@
 streamlit
-torch
-whisper
-pandas
-numpy
-fuzzywuzzy
-python-Levenshtein
 streamlit-audio-recorder
+torch
+openai-whisper
+pandas
+fuzzywuzzy
+python-Levenshtein  # Required for fuzzywuzzy

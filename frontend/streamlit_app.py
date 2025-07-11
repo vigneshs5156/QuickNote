@@ -26,7 +26,7 @@ if audio_value:
 
         with st.spinner("In progess..."):
             try:
-                response = requests.post("https://6824326daf21.ngrok-free.app/transcribe", files=files)
+                response = requests.post("https://656cbe97210e.ngrok-free.app/transcribe", files=files)
 
                 if response.status_code == 200:
                     st.success("Transcribed successfully!")

@@ -115,7 +115,7 @@ if st.session_state.current_df is not None and not st.session_state.current_df.e
     st.markdown(custom_table_html, unsafe_allow_html=True)
 
     # Check for button actions
-    query_params = st.experimental_get_query_params()
+    query_params = st.query_params()
 
     if "delete" in query_params:
         idx = int(query_params["delete"][0])

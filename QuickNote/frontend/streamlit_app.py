@@ -39,63 +39,110 @@ if audio_value:
                 st.error(f"Error: {e}")
 
 # Show current transcribed data with delete functionality
-
-# Show current transcribed data with delete and quantity buttons
 if st.session_state.current_df is not None and not st.session_state.current_df.empty:
     st.subheader("Current Transcription")
 
-    # Create columns for the table display
-    cols = st.columns([1] + [1] * len(st.session_state.current_df.columns))
+    custom_table_html = """
+    <style>
+        .responsive-table {
+            overflow-x: auto;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            min-width: 600px;
+        }
+        th, td {
+            text-align: center;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        .qty-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+        }
+        .qty-buttons form {
+            display: inline;
+        }
+        .delete-btn form {
+            display: inline;
+        }
+    </style>
+    <div class="responsive-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Delete</th>
+                    <th>Item</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+    """
 
-    # Header row
-    with cols[0]:
-        st.write("**Delete**")
-    for i, col_name in enumerate(st.session_state.current_df.columns):
-        with cols[i + 1]:
-            st.write(f"**{col_name}**")
-
-    # Data rows with delete and quantity adjust buttons
     for idx, row in st.session_state.current_df.iterrows():
-        cols = st.columns([1] + [1] * len(st.session_state.current_df.columns))
+        custom_table_html += f"""
+            <tr>
+                <td class="delete-btn">
+                    <form action="?delete={idx}" method="post">
+                        <button type="submit">🗑️</button>
+                    </form>
+                </td>
+                <td>{row['Item']}</td>
+                <td class="qty-buttons">
+                    <form action="?minus={idx}" method="post">
+                        <button type="submit">➖</button>
+                    </form>
+                    {row['Quantity']}
+                    <form action="?plus={idx}" method="post">
+                        <button type="submit">➕</button>
+                    </form>
+                </td>
+                <td>{row['Price']}</td>
+                <td>{row['Total']}</td>
+            </tr>
+        """
 
-        # Delete button
-        with cols[0]:
-            if st.button("🗑️", key=f"delete_{idx}", help= "Delete Item"):
-                st.session_state.current_df = st.session_state.current_df.drop(idx).reset_index(drop=True)
-                st.rerun()
+    custom_table_html += """
+            </tbody>
+        </table>
+    </div>
+    """
 
-        for i, (col_name, value) in enumerate(row.items()):
-            with cols[i + 1]:
-                if col_name == "Quantity":
-                    qty = st.session_state.current_df.at[idx, "Quantity"]
-                
-                    minus_clicked = st.button("➖", key=f"minus_{idx}")
-                    st.markdown(
-                        f"<div style='text-align: center; font-weight: bold; font-size: 18px;'>{qty}</div>",
-                        unsafe_allow_html=True
-                    )
-                    plus_clicked = st.button("➕", key=f"plus_{idx}")
-                
-                    if plus_clicked:
-                        st.session_state.current_df.at[idx, "Quantity"] += 1
-                        st.session_state.current_df.at[idx, "Total"] = (
-                            st.session_state.current_df.at[idx, "Quantity"] *
-                            st.session_state.current_df.at[idx, "Price"]
-                        )
-                        st.rerun()
-                
-                    if minus_clicked and qty > 1:
-                        st.session_state.current_df.at[idx, "Quantity"] -= 1
-                        st.session_state.current_df.at[idx, "Total"] = (
-                            st.session_state.current_df.at[idx, "Quantity"] *
-                            st.session_state.current_df.at[idx, "Price"]
-                        )
-                        st.rerun()
+    st.markdown(custom_table_html, unsafe_allow_html=True)
 
-                else:
-                    st.write(str(value))
+    # Check for button actions
+    query_params = st.experimental_get_query_params()
 
-    st.subheader(f"Current Total : ₹{sum(st.session_state.current_df['Total'])}")
+    if "delete" in query_params:
+        idx = int(query_params["delete"][0])
+        st.session_state.current_df = st.session_state.current_df.drop(idx).reset_index(drop=True)
+        st.experimental_set_query_params()
+        st.rerun()
+
+    if "plus" in query_params:
+        idx = int(query_params["plus"][0])
+        st.session_state.current_df.at[idx, "Quantity"] += 1
+        st.session_state.current_df.at[idx, "Total"] = (
+            st.session_state.current_df.at[idx, "Quantity"] * st.session_state.current_df.at[idx, "Price"]
+        )
+        st.experimental_set_query_params()
+        st.rerun()
+
+    if "minus" in query_params:
+        idx = int(query_params["minus"][0])
+        if st.session_state.current_df.at[idx, "Quantity"] > 1:
+            st.session_state.current_df.at[idx, "Quantity"] -= 1
+            st.session_state.current_df.at[idx, "Total"] = (
+                st.session_state.current_df.at[idx, "Quantity"] * st.session_state.current_df.at[idx, "Price"]
+            )
+            st.experimental_set_query_params()
+            st.rerun()
+
+    st.subheader(f"Current Total: ₹{sum(st.session_state.current_df['Total'])}")
 
 
 # Show submit button only if we have a current transcribed df

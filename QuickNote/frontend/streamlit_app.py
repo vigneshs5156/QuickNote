@@ -42,105 +42,74 @@ if audio_value:
 if st.session_state.current_df is not None and not st.session_state.current_df.empty:
     st.subheader("Current Transcription")
 
-    custom_table_html = """
-    <style>
-        .responsive-table {
+    st.markdown("""
+        <style>
+        .scroll-table {
             overflow-x: auto;
         }
-        table {
-            border-collapse: collapse;
-            width: 100%;
+        .scroll-table > div {
             min-width: 600px;
         }
-        th, td {
-            text-align: center;
-            padding: 10px;
-            border: 1px solid #ddd;
-        }
-        .qty-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-        }
-        .qty-buttons form {
-            display: inline;
-        }
-        .delete-btn form {
-            display: inline;
-        }
-    </style>
-    <div class="responsive-table">
-        <table>
-            <thead>
-                <tr>
-                    <th>Delete</th>
-                    <th>Item</th>
-                    <th>Quantity</th>
-                    <th>Price</th>
-                    <th>Total</th>
-                </tr>
-            </thead>
-            <tbody>
-    """
+        </style>
+    """, unsafe_allow_html=True)
 
-    for idx, row in st.session_state.current_df.iterrows():
-        custom_table_html += f"""
-            <tr>
-                <td class="delete-btn">
-                    <form action="?delete={idx}" method="post">
-                        <button type="submit">🗑️</button>
-                    </form>
-                </td>
-                <td>{row['Item']}</td>
-                <td class="qty-buttons">
-                    <form action="?minus={idx}" method="post">
-                        <button type="submit">➖</button>
-                    </form>
-                    {row['Quantity']}
-                    <form action="?plus={idx}" method="post">
-                        <button type="submit">➕</button>
-                    </form>
-                </td>
-                <td>{row['Price']}</td>
-                <td>{row['Total']}</td>
-            </tr>
-        """
+    with st.container():
+        st.markdown('<div class="scroll-table">', unsafe_allow_html=True)
 
-    custom_table_html += """
-            </tbody>
-        </table>
-    </div>
-    """
+        # Header
+        header_cols = st.columns([1, 3, 3, 2, 2])
+        header_cols[0].markdown("**Delete**")
+        header_cols[1].markdown("**Item**")
+        header_cols[2].markdown("**Quantity**")
+        header_cols[3].markdown("**Price**")
+        header_cols[4].markdown("**Total**")
 
-    st.markdown(custom_table_html, unsafe_allow_html=True)
+        # Rows
+        for idx, row in st.session_state.current_df.iterrows():
+            row_cols = st.columns([1, 3, 3, 2, 2])
 
-    # Check for button actions
-    query_params = st.query_params()
+            # Delete button
+            with row_cols[0]:
+                if st.button("🗑️", key=f"delete_{idx}"):
+                    st.session_state.current_df = st.session_state.current_df.drop(idx).reset_index(drop=True)
+                    st.rerun()
 
-    if "delete" in query_params:
-        idx = int(query_params["delete"][0])
-        st.session_state.current_df = st.session_state.current_df.drop(idx).reset_index(drop=True)
-        st.experimental_set_query_params()
-        st.rerun()
+            # Item
+            row_cols[1].write(row["Item"])
 
-    if "plus" in query_params:
-        idx = int(query_params["plus"][0])
-        st.session_state.current_df.at[idx, "Quantity"] += 1
-        st.session_state.current_df.at[idx, "Total"] = (
-            st.session_state.current_df.at[idx, "Quantity"] * st.session_state.current_df.at[idx, "Price"]
-        )
-        st.experimental_set_query_params()
-        st.rerun()
+            # Quantity with ➖ and ➕
+            with row_cols[2]:
+                qty_cols = st.columns([1, 2, 1])
+                with qty_cols[0]:
+                    if st.button("➖", key=f"minus_{idx}"):
+                        if st.session_state.current_df.at[idx, "Quantity"] > 1:
+                            st.session_state.current_df.at[idx, "Quantity"] -= 1
+                            st.session_state.current_df.at[idx, "Total"] = (
+                                st.session_state.current_df.at[idx, "Quantity"] *
+                                st.session_state.current_df.at[idx, "Price"]
+                            )
+                            st.rerun()
+                with qty_cols[1]:
+                    st.markdown(
+                        f"<div style='text-align: center; padding-top: 6px; font-size: 16px;'>{row['Quantity']}</div>",
+                        unsafe_allow_html=True
+                    )
+                with qty_cols[2]:
+                    if st.button("➕", key=f"plus_{idx}"):
+                        st.session_state.current_df.at[idx, "Quantity"] += 1
+                        st.session_state.current_df.at[idx, "Total"] = (
+                            st.session_state.current_df.at[idx, "Quantity"] *
+                            st.session_state.current_df.at[idx, "Price"]
+                        )
+                        st.rerun()
 
-    if "minus" in query_params:
-        idx = int(query_params["minus"][0])
-        if st.session_state.current_df.at[idx, "Quantity"] > 1:
-            st.session_state.current_df.at[idx, "Quantity"] -= 1
-            st.session_state.current_df.at[idx, "Total"] = (
-                st.session_state.current_df.at[idx, "Quantity"] * st.session_state.current_df.at[idx, "Price"]
-            )
-            st.experimental_set_query_params()
-            st.rerun()
+            # Price
+            row_cols[3].write(row["Price"])
+
+            # Total
+            row_cols[4].write(row["Total"])
+
+        st.markdown('</div>', unsafe_allow_html=True)
 
     st.subheader(f"Current Total: ₹{sum(st.session_state.current_df['Total'])}")
 

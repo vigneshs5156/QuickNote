@@ -67,31 +67,31 @@ if st.session_state.current_df is not None and not st.session_state.current_df.e
         for i, (col_name, value) in enumerate(row.items()):
             with cols[i + 1]:
                 if col_name == "Quantity":
-                    qty_cols = st.columns([1, 1, 1])
-                    with qty_cols[0]:
-                        if st.button("➖", key=f"minus_{idx}"):
-                            if st.session_state.current_df.at[idx, "Quantity"] > 1:
-                                st.session_state.current_df.at[idx, "Quantity"] -= 1
-                                st.session_state.current_df.at[idx, "Total"] = (
-                                    st.session_state.current_df.at[idx, "Quantity"] *
-                                    st.session_state.current_df.at[idx, "Price"]
-                                )
-                                st.rerun()
-
-                    with qty_cols[1]:
-                        st.markdown(
-                            f"<div style='text-align: right; font-size: 16px; font-weight: bold; padding-top: 6px;'>{value}</div>",
-                            unsafe_allow_html=True
+                    qty = st.session_state.current_df.at[idx, "Quantity"]
+                
+                    minus_clicked = st.button("➖", key=f"minus_{idx}")
+                    st.markdown(
+                        f"<div style='text-align: center; font-weight: bold; font-size: 18px;'>{qty}</div>",
+                        unsafe_allow_html=True
+                    )
+                    plus_clicked = st.button("➕", key=f"plus_{idx}")
+                
+                    if plus_clicked:
+                        st.session_state.current_df.at[idx, "Quantity"] += 1
+                        st.session_state.current_df.at[idx, "Total"] = (
+                            st.session_state.current_df.at[idx, "Quantity"] *
+                            st.session_state.current_df.at[idx, "Price"]
                         )
+                        st.rerun()
+                
+                    if minus_clicked and qty > 1:
+                        st.session_state.current_df.at[idx, "Quantity"] -= 1
+                        st.session_state.current_df.at[idx, "Total"] = (
+                            st.session_state.current_df.at[idx, "Quantity"] *
+                            st.session_state.current_df.at[idx, "Price"]
+                        )
+                        st.rerun()
 
-                    with qty_cols[2]:
-                        if st.button("➕", key=f"plus_{idx}"):
-                            st.session_state.current_df.at[idx, "Quantity"] += 1
-                            st.session_state.current_df.at[idx, "Total"] = (
-                                st.session_state.current_df.at[idx, "Quantity"] *
-                                st.session_state.current_df.at[idx, "Price"]
-                            )
-                            st.rerun()
                 else:
                     st.write(str(value))
 

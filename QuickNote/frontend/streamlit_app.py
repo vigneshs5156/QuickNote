@@ -27,7 +27,7 @@ if audio_value:
 
         with st.spinner("In progess..."):
             try:
-                response = requests.post("https://656cbe97210e.ngrok-free.app/transcribe", files=files)
+                response = requests.post("https://0a7930ecb766.ngrok-free.app/transcribe", files=files)
 
                 if response.status_code == 200:
                     df = get_df(response.text)
